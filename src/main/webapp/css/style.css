@@ -157,3 +157,7 @@ pre {
 h3 {
     font-size: larger;
 }
+h1 {
+    font-size: 24px;
+    display: inline;
+}
