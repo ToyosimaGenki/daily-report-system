@@ -46,9 +46,25 @@ public enum AttributeConst {
     REPORTS("reports"),
     REP_COUNT("reports_count"),
     REP_ID("id"),
+    REP_LIKE_COUNT("like_count"),
     REP_DATE("report_date"),
     REP_TITLE("title"),
-    REP_CONTENT("content_msg");
+    REP_EMP("employee_id"),
+    REP_CONTENT("content_msg"),
+
+
+    LIKE("like"),
+    LIKES("likes"),
+    LIKE_COUNT("likes_count"),
+    LIKE_ID("id"),
+
+    FOLLOW("follow"),
+    FOLLOWS("follows"),
+    FOL_COUNT("follows_count"),
+    FOL_ID("id"),
+
+
+    ;
 
     private final String text;
     private final Integer i;

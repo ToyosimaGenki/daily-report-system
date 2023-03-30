@@ -15,6 +15,8 @@ public enum MessageConst {
     I_REGISTERED("登録が完了しました。"),
     I_UPDATED("更新が完了しました。"),
     I_DELETED("削除が完了しました。"),
+    I_LIKE_COUNT("いいねしました。"),
+    I_FOLLOW("フォローしました"),
 
     //バリデーション
     E_NONAME("氏名を入力してください。"),
@@ -23,7 +25,6 @@ public enum MessageConst {
     E_EMP_CODE_EXIST("入力された社員番号の情報は既に存在しています。"),
     E_NOTITLE("タイトルを入力してください。"),
     E_NOCONTENT("内容を入力してください。");
-
 
     /**
      * 文字列

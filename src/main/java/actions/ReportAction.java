@@ -7,11 +7,15 @@ import java.util.List;
 import javax.servlet.ServletException;
 
 import actions.views.EmployeeView;
+import actions.views.FollowView;
+import actions.views.LikeView;
 import actions.views.ReportView;
 import constants.AttributeConst;
 import constants.ForwardConst;
 import constants.JpaConst;
 import constants.MessageConst;
+import services.FollowService;
+import services.LikeService;
 import services.ReportService;
 
 /**
@@ -21,7 +25,8 @@ import services.ReportService;
 public class ReportAction extends ActionBase {
 
     private ReportService service;
-
+    private LikeService service1;
+    private FollowService service2;
     /**
      * メソッドを実行する
      */
@@ -29,10 +34,13 @@ public class ReportAction extends ActionBase {
     public void process() throws ServletException, IOException {
 
         service = new ReportService();
-
+        service1 = new LikeService();
+        service2 = new FollowService();
         //メソッドを実行
         invoke();
         service.close();
+        service1.close();
+        service2.close();
     }
 
     /**
@@ -112,7 +120,9 @@ public class ReportAction extends ActionBase {
                     getRequestParam(AttributeConst.REP_TITLE),
                     getRequestParam(AttributeConst.REP_CONTENT),
                     null,
-                    null);
+                    null,
+                    0);
+
 
             //日報情報登録
             List<String> errors = service.create(rv);
@@ -145,7 +155,7 @@ public class ReportAction extends ActionBase {
      */
     public void show() throws ServletException, IOException {
 
-        //idを条件に日報データを取得する
+        EmployeeView ev = (EmployeeView) getSessionScope(AttributeConst.LOGIN_EMP);
         ReportView rv = service.findOne(toNumber(getRequestParam(AttributeConst.REP_ID)));
 
         if (rv == null) {
@@ -156,10 +166,19 @@ public class ReportAction extends ActionBase {
 
             putRequestScope(AttributeConst.REPORT, rv); //取得した日報データ
 
+            //ログイン中の従業員が作成した日報データの件数を取得
+            long likesCount = service1.countLikesByReportAndEmployee(rv, ev);
+            putRequestScope(AttributeConst.LIKE_COUNT, likesCount);
+
+            EmployeeView fv = rv.getEmployee();
+            //ログイン中の従業員が作成した日報データの件数を取得
+            long followsCount = service2.countALL(fv, ev);
+            putRequestScope(AttributeConst.FOL_COUNT, followsCount);
+        }
             //詳細画面を表示
             forward(ForwardConst.FW_REP_SHOW);
         }
-    }
+
     /**
      * 編集画面を表示する
      * @throws ServletException
@@ -230,4 +249,125 @@ public class ReportAction extends ActionBase {
             }
         }
     }
+
+    public void likeCount() throws ServletException, IOException {
+
+        //セッションからログイン中の従業員情報を取得
+        EmployeeView ev = (EmployeeView) getSessionScope(AttributeConst.LOGIN_EMP);
+        ReportView rv = service.findOne(toNumber(getRequestParam(AttributeConst.REP_ID)));
+
+
+
+
+        //パラメータの値をもとにいいねのインスタンスを作成する
+        LikeView lv = new LikeView(
+                null,
+                ev, //ログインしている従業員を、日報作成者として登録する
+                rv,
+                null,
+                null);
+
+             service1.create(lv);
+
+            //入力されたいいねの内容を設定する
+
+            rv.setLikeCount(rv.getLikeCount() + 1 );
+
+
+            //日報データを更新する
+            List<String> errors = service.update(rv);
+
+
+                //セッションに更新完了のフラッシュメッセージを設定
+                putSessionScope(AttributeConst.FLUSH, MessageConst.I_LIKE_COUNT.getMessage());
+
+                //一覧画面にリダイレクト
+                redirect(ForwardConst.ACT_REP, ForwardConst.CMD_INDEX);
+
+    }
+
+    public void likes() throws ServletException, IOException {
+
+
+        ReportView rv = service.findOne(toNumber(getRequestParam(AttributeConst.REP_ID)));
+
+
+        putRequestScope(AttributeConst.LIKE, rv); //取得したいいねデータ
+
+      //指定されたページ数の一覧画面に表示するいいねデータを取得
+        int page = getPage();
+        List<LikeView> likes = service1.getMinePerPage(rv, page);
+
+
+        //ログイン中の従業員が作成した日報データの件数を取得
+        long likesCount = service1.countAllMine(rv);
+
+        putRequestScope(AttributeConst.LIKES, likes); //取得した日報データ
+        putRequestScope(AttributeConst.LIKE_COUNT, likesCount); //全ての日報データの件数
+        putRequestScope(AttributeConst.PAGE, page); //ページ数
+        putRequestScope(AttributeConst.MAX_ROW, JpaConst.ROW_PER_PAGE); //1ページに表示するレコードの数
+
+        //いいねした人一覧画面を表示
+        forward(ForwardConst.FW_REP_LIKES);
+        }
+
+public void timeline() throws ServletException, IOException {
+
+    EmployeeView ev = (EmployeeView) getSessionScope(AttributeConst.LOGIN_EMP);
+
+  //指定されたページ数の一覧画面に表示する日報データを取得
+    int page = getPage();
+    List<ReportView> Follows = service2.getMinePerPage(ev, page);
+
+    //全日報データの件数を取得
+    long followsCount = service2.countAllMine(ev);
+
+    putRequestScope(AttributeConst.FOLLOWS, Follows); //取得した日報データ
+    putRequestScope(AttributeConst.FOL_COUNT, followsCount); //全ての日報データの件数
+    putRequestScope(AttributeConst.PAGE, page); //ページ数
+    putRequestScope(AttributeConst.MAX_ROW, JpaConst.ROW_PER_PAGE); //1ページに表示するレコードの数
+
+
+    //一覧画面を表示
+    forward(ForwardConst.FW_REP_TIMELINE);
+}
+
+
+
+public void follow() throws ServletException, IOException {
+
+    EmployeeView ev = (EmployeeView) getSessionScope(AttributeConst.LOGIN_EMP);
+    ReportView rv = service.findOne(toNumber(getRequestParam(AttributeConst.REP_ID)));
+
+
+    FollowView fv = new FollowView(
+            null,
+            ev, //ログインしている従業員を、日報作成者として登録する
+            rv.getEmployee(),
+            null,
+            null);
+
+       service2.create(fv);
+
+
+       //指定されたページ数の一覧画面に表示する日報データを取得
+       int page = getPage();
+       List<ReportView> Follows = service2.getMinePerPage(ev, page);
+
+       //全日報データの件数を取得
+       long followsCount = service2.countAllMine(ev);
+
+       putRequestScope(AttributeConst.FOLLOWS, Follows); //取得した日報データ
+       putRequestScope(AttributeConst.FOL_COUNT, followsCount); //全ての日報データの件数
+       putRequestScope(AttributeConst.PAGE, page); //ページ数
+       putRequestScope(AttributeConst.MAX_ROW, JpaConst.ROW_PER_PAGE); //1ページに表示するレコードの数
+
+    //セッションに更新完了のフラッシュメッセージを設定
+    putSessionScope(AttributeConst.FLUSH, MessageConst.I_FOLLOW.getMessage());
+
+    //一覧画面を表示
+    forward(ForwardConst.FW_REP_TIMELINE);
+}
+
+
 }

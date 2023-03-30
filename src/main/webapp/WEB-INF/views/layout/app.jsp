@@ -10,7 +10,7 @@
 
 <c:set var="commIdx" value="${ForwardConst.CMD_INDEX.getValue()}" />
 <c:set var="commOut" value="${ForwardConst.CMD_LOGOUT.getValue()}" />
-
+<c:set var="commTim" value="${ForwardConst.CMD_TIMELINE.getValue()}" />
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -29,6 +29,7 @@
                         <a href="<c:url value='?action=${actEmp}&command=${commIdx}' />">従業員管理</a>&nbsp;
                     </c:if>
                     <a href="<c:url value='?action=${actRep}&command=${commIdx}' />">日報管理</a>&nbsp;
+                    <a href="<c:url value='?action=${actRep}&command=${commTim}' />">タイムライン</a>&nbsp;
                 </c:if>
             </div>
             <c:if test="${sessionScope.login_employee != null}">

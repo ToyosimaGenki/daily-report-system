@@ -6,6 +6,10 @@
 <c:set var="actRep" value="${ForwardConst.ACT_REP.getValue()}" />
 <c:set var="commIdx" value="${ForwardConst.CMD_INDEX.getValue()}" />
 <c:set var="commEdt" value="${ForwardConst.CMD_EDIT.getValue()}" />
+<c:set var="commFol" value="${ForwardConst.CMD_FOLLOW.getValue()}" />
+<c:set var="likeCount" value="${ForwardConst.CMD_LIKE_COUNT.getValue()}" />
+<c:set var="commLikes" value="${ForwardConst.CMD_LIKES.getValue()}" />
+
 
 <c:import url="/WEB-INF/views/layout/app.jsp">
     <c:param name="content">
@@ -14,6 +18,7 @@
 
         <table>
             <tbody>
+
                 <tr>
                     <th>氏名</th>
                     <td><c:out value="${report.employee.name}" /></td>
@@ -37,6 +42,10 @@
                     <fmt:parseDate value="${report.updatedAt}" pattern="yyyy-MM-dd'T'HH:mm:ss" var="updateDay" type="date" />
                     <td><fmt:formatDate value="${updateDay}" pattern="yyyy-MM-dd HH:mm:ss" /></td>
                 </tr>
+                <tr>
+                    <th>いいね数</th>
+                    <td><a href="<c:url value='?action=${actRep}&command=${commLikes}&id=${report.id}' />">${report.likeCount}</a></td>
+                </tr>
             </tbody>
         </table>
 
@@ -45,9 +54,19 @@
                 <a href="<c:url value='?action=${actRep}&command=${commEdt}&id=${report.id}' />">この日報を編集する</a>
             </p>
         </c:if>
+        <c:if test="${sessionScope.login_employee.id != report.employee.id && likes_count == 0}">
+            <p>
+                <a href="<c:url value='?action=${actRep}&command=${likeCount}&id=${report.id}' />">この日報にいいねをする</a>
 
-        <p>
-            <a href="<c:url value='?action=${actRep}&command=${commIdx}' />">一覧に戻る</a>
-        </p>
+            </p>
+        </c:if>
+       <c:if test="${sessionScope.login_employee.id != report.employee.id && follows_count == 0}">
+            <p>
+                <a href="<c:url value='?action=${actRep}&command=${commFol}&id=${report.id}' />">この日報の作成者をフォローする</a>
+            </p>
+        </c:if>
+             <p>
+                <a href="<c:url value='?action=${actRep}&command=${commIdx}' />">一覧に戻る</a>
+             </p>
     </c:param>
 </c:import>
